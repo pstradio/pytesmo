@@ -109,6 +109,7 @@ def get_scaling_method_lut():
         "min_max": min_max,
         "cdf_match": cdf_match,
         "cdf_beta_match": cdf_beta_match,
+        "polyreg": polyreg,
     }
 
     return lut
@@ -158,7 +159,7 @@ def min_max(src, ref, **kwargs):
         dataset src with same maximum and minimum as ref
     """
     return (src - np.min(src)) / (np.max(src) - np.min(src)) * (
-        np.max(ref) - np.min(ref)
+            np.max(ref) - np.min(ref)
     ) + np.min(ref)
 
 
@@ -320,3 +321,39 @@ def cdf_match(
     if min_val is not None:
         scaled[scaled < min_val] = min_val
     return scaled
+
+
+def polyreg(src, ref, n=3, cdf=False, **kwargs):
+    """
+    Rescales by a polynomial regression of the z-scores:
+
+        rescaled = SUM_i ([(src-µ_src)/σ_src]^i * C_i)
+
+    Finds and applies 2 + n scaling coefficients where the first 2 are
+    µ (mean) and sigma (standard deviation) and the following
+    are the n polynomial coefficients.
+
+
+    Parameters
+    ----------
+    src : numpy.array
+        input dataset which will be scaled
+    ref : numpy.array
+        src will be scaled to this dataset
+    n : int
+        polynomial order
+    cdf : bool
+        whether to apply the regression on the CDFs
+
+    Returns
+    -------
+    scaled dataset : numpy.array
+        dataset src with same maximum and minimum as ref
+    """
+    mu, sigma = np.nanmean(src), np.nanstd(src)
+    zscaled = ((src - mu) / sigma)
+
+    mask = ~np.isnan(src) & ~np.isnan(ref)
+    coef = np.polyfit(zscaled[mask], ref[mask], n)
+
+    return np.poly1d(coef)(zscaled)

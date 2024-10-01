@@ -38,12 +38,10 @@ import pandas as pd
 import numpy.testing as nptest
 import pytest
 
-
 scaling_methods = list(scaling.get_scaling_method_lut().keys())
 
 
 def test_mean_std_scaling():
-
     # use a random sample from a standard distribution
     n = 1000
     x = np.random.normal(0, 0.5, n)
@@ -55,7 +53,6 @@ def test_mean_std_scaling():
 
 
 def test_min_max_scaling():
-
     # use a random sample from a standard distribution
     n = 1000
     x = np.random.normal(0, 0.5, n)
@@ -102,7 +99,6 @@ def test_scaling_kwargs(method):
 
 @pytest.mark.parametrize('method', scaling_methods)
 def test_scale(method):
-
     n = 1000
     x = np.arange(n)
     y = np.arange(n) * 0.5
@@ -117,7 +113,6 @@ def test_scale(method):
 
 @pytest.mark.parametrize('method', ['non_existing_method'])
 def test_scale_error(method):
-
     n = 1000
     x = np.arange(n)
     y = np.arange(n) * 0.5
@@ -133,7 +128,6 @@ def test_scale_error(method):
 
 @pytest.mark.parametrize('method', ['non_existing_method'])
 def test_add_scale_error(method):
-
     n = 1000
     x = np.arange(n, dtype=float)
     y = np.arange(n) * 0.5
@@ -147,7 +141,6 @@ def test_add_scale_error(method):
 
 @pytest.mark.parametrize('method', scaling_methods)
 def test_add_scale(method):
-
     n = 1000
     x = np.arange(n, dtype=float)
     y = np.arange(n) * 0.5
@@ -182,11 +175,27 @@ def test_linreg_with_nan():
     nptest.assert_almost_equal(df.loc[10:, 'x'].values,
                                df.loc[10:, 'y'].values)
 
-    assert(df.index.size == n)
+    assert (df.index.size == n)
+
+
+def test_polyreg_with_nan():
+    n = 1000
+    x = np.arange(float(n))
+    y = np.arange(float(n)) * 0.5
+
+    x[0:10] = np.nan
+
+    df = pd.DataFrame(data={'x': x, 'y': y})
+
+    df['x'] = scaling.polyreg(df['x'].values, df['y'].values, 3)
+
+    nptest.assert_almost_equal(df.loc[10:, 'x'].values,
+                               df.loc[10:, 'y'].values)
+
+    assert (df.index.size == n)
 
 
 def test_single_percentile_data():
-
     n = 1000
     x = np.arange(n, dtype=float)
     y = np.ones(n)
